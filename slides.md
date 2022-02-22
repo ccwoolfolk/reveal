@@ -305,8 +305,7 @@ const getPath = (content: Concept | Lab): string => {
 };
 ```
 
-- But now we need a way to differentiate Concepts/Labs
-- So we're back to narrowing a union type
+But now we need a way to narrow Concepts/Labs
 
 ---
 
