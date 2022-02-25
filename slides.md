@@ -15,7 +15,7 @@ Simple tools for simple(r) code
 
 ## TypeScript basics in 60 seconds
 
-```typescript
+```typescript [1-2|3-9|10-14]
 // Explicit primitive annotation
 const isAnExample: boolean = true;
 
@@ -38,7 +38,7 @@ function logStudentName(student: Student): void {
 
 TypeScript uses a "structural" type system.
 
-```typescript
+```typescript [1-8|1-12|1-15|]
 interface Student {
   name: string;
 }
@@ -53,7 +53,7 @@ function logStudentName(student: Student): void {
 }
 
 const student: Student = { name: "Casey" };
-const nd: Nanodegree = { name: "TS Basics", key: "nd12345" };
+const nd: Nanodegree = { name: "TS Basics", key: "nd1" };
 
 logStudentName(student); // OK
 logStudentName(nd); // Also OK
@@ -71,7 +71,7 @@ logStudentName(nd); // Also OK
 
 ## Narrowing 101
 
-```typescript
+```typescript [1-3|1-7|]
 function logAString(s: string): void {
   console.log(s);
 }
@@ -89,15 +89,19 @@ if (typeof item === "string") {
 
 ## TypeScript unions
 
-```typescript
+```typescript []
 type Thing = number | string | boolean;
 
 const things: Thing[] = [1, "a", true, NaN];
 ```
 
+---
+
+## TypeScript unions
+
 Also useful for optional properties...
 
-```typescript
+```typescript []
 interface Student {
   id: number;
   favoriteColor?: string; // string | undefined
@@ -114,8 +118,8 @@ interface Student {
 
 ## Problem 1: Filter
 
-```typescript
-// Usually as a result of `map`ping an optional property...
+```typescript [1-4|6-8|]
+// Usually as a result of `map`ping an optional property
 const maybeValues: (number | undefined)[] = [
   123, 456, undefined, 789
 ];
@@ -134,7 +138,7 @@ maybeValues.map(fancyAlgorithm);
 
 A logical solution would be to try `filter`ing...
 
-```typescript
+```typescript [1-7|9-11]
 const maybeValues: (number | undefined)[] = [
   123, 456, undefined, 789
 ];
@@ -154,9 +158,9 @@ maybeValues
 
 Looking at the basic definition of `filter` shows why:
 
-```typescript
+```typescript [1|3-5|]
   filter(
-    predicate: (value: T, i: number, array: T[]) => unknown,
+    predicate: (val: T, i: number, array: T[]) => unknown,
     thisArg?: any,
   ): T[];
 ```
@@ -169,14 +173,14 @@ We provide `T[]` and get back `T[]` (not unreasonably).
 
 Enter custom type guards...
 
-```typescript
+```typescript [1|1-5|1-7|]
 type MaybeNumber = number | undefined;
 
 function isDefinedNumber(n: MaybeNumber): n is number {
   return n !== undefined;
 }
 
-const maybeNumber: MaybeNumber = 1;
+const maybeNumber: MaybeNumber = [1, undefined, 3, 4][0];
 
 if (isDefinedNumber(maybeNumber)) {
   // type of maybeNumber is narrowed to `number`
@@ -191,7 +195,7 @@ if (isDefinedNumber(maybeNumber)) {
 
 Revisiting our problem...
 
-```typescript
+```typescript [1-8|10-12|14-17]
 // Same type guard and array
 type MaybeNumber = number | undefined;
 function isDefinedNumber(n: MaybeNumber): n is number {
@@ -234,7 +238,7 @@ So we sometimes want two different types...but sometimes want a single union typ
 
 As a first approach, we can just store labs and concepts separately...
 
-```typescript
+```typescript [1-11|13-16]
 interface Concept {
   key: string;
   title: string;
@@ -257,7 +261,7 @@ interface Lesson {
 
 ## Problem 2: Concepts & Labs
 
-```typescript
+```typescript []
 const getPathToNextFromConcept = (
   currentKey: string, lesson: Lesson
 ) => {
@@ -292,15 +296,17 @@ This approach works, but:
 
 Ideally, we would have something like:
 
-```typescript
-const getContent = (lesson: Lesson): (Concept | Lab)[] => {
+```typescript [1-8|10-12]
+type Content = Concept | Lab;
+
+const getContent = (lesson: Lesson): Content[] => {
   const { concepts } = lesson;
   const labs = lesson.lab ? [lesson.lab] : [];
 
   return [...concepts, ...labs];
 };
 
-const getPath = (content: Concept | Lab): string => {
+const getPath = (content: Content): string => {
   // etc etc etc
 };
 ```
@@ -321,7 +327,7 @@ But if we accept that a union could be a useful readability improvement, then we
 
 We _could_ use type guards again.
 
-```typescript
+```typescript []
 interface Concept {
   // ...
   atoms: object[];
@@ -360,7 +366,7 @@ const isConcept = (c: Concept | Lab): c is Concept => {
 - The data structures underlying both are similar or identical
 - We have type definitions for both - largely as a documentation tool
 
-```typescript
+```typescript []
 export interface PaidCourse {
   readonly key: string;
   readonly title: string;
@@ -383,11 +389,11 @@ export interface FreeCourse {
 
 ## Problem 3: Courses
 
-```typescript
+```typescript [1-2|4-13|15-17]
 const freeCourseSideEffect = (fc: FreeCourse) => {};
 const paidCourseSideEffect = (pc: PaidCourse) => {};
 
-// We generate two course objects with accurate annotations
+// We generate two courses with accurate annotations
 const paidCourse: PaidCourse = {
   key: "paid-1",
   title: "A paid course",
@@ -431,7 +437,7 @@ Valid, but this resulted in some undesirable verbosity for us.
 
 Solution 2: Differentiate the types
 
-```typescript
+```typescript [1-7|9-17]
 interface NewFreeCourse extends FreeCourse {
   _brand: "FreeCourse";
 }
@@ -457,7 +463,7 @@ const newPaidCourse = {
 
 ...and our problem is solved.
 
-```typescript
+```typescript []
 const freeCourseSideEffect = (fc: NewFreeCourse) => {};
 const paidCourseSideEffect = (pc: NewPaidCourse) => {};
 
@@ -475,7 +481,7 @@ paidCourseSideEffect(newPaidCourse);
 
 We could even encapsulate this type branding into a generic type.
 
-```typescript
+```typescript []
 interface Branded<UniqueBrand> {
   _brand: UniqueBrand;
 }
@@ -504,7 +510,7 @@ Ideally, the brand key wouldn't collide with potential values in the underlying 
 
 We can now use a discriminated union and don't really even need custom type guards.
 
-```typescript
+```typescript []
 const courses: (NewFreeCourse | NewPaidCourse)[] = [];
 
 courses.forEach((course) => {
@@ -531,29 +537,25 @@ courses.forEach((course) => {
 
 If you want to work solely within the type system...
 
-```typescript
-enum FreeCourseBrand {
-  _ = "",
-}
-enum PaidCourseBrand {
-  _ = "",
-}
+```typescript [1-2|1-9|11-12|14-15|17-18]
+enum FreeBrand { _ = "" }
+enum PaidBrand { _ = "" }
 
-interface BrandedFreeCourse extends Branded<FreeCourseBrand> {
+interface FreeCourse extends Branded<FreeBrand> {
   key: string;
 }
-interface BrandedPaidCourse extends Branded<PaidCourseBrand> {
+interface PaidCourse extends Branded<PaidBrand> {
   key: string;
 }
 
-const brandedFreeCourse = { key: "abc" } as BrandedFreeCourse;
-const brandedPaidCourse = { key: "xyz" } as BrandedPaidCourse;
+const freeCourse = { key: "abc" } as FreeCourse;
+const paidCourse = { key: "xyz" } as PaidCourse;
 
-const freeCourseSideEffect = (fc: BrandedFreeCourse) => {};
-const paidCourseSideEffect = (pc: BrandedPaidCourse) => {};
+const freeCourseSideEffect = (fc: FreeCourse) => {};
+const paidCourseSideEffect = (pc: PaidCourse) => {};
 
-freeCourseSideEffect(brandedPaidCourse); // Error!
-paidCourseSideEffect(brandedPaidCourse); // No error!
+freeCourseSideEffect(paidCourse); // Error!
+paidCourseSideEffect(paidCourse); // No error!
 ```
 
 ## Branding
@@ -568,15 +570,11 @@ paidCourseSideEffect(brandedPaidCourse); // No error!
 
 Don't even need to use interfaces/objects...
 
-```typescript
-enum LessonIdBrand {
-  _ = "",
-}
+```typescript [1-2|4-5|7-8]
+enum LessonIdBrand { _ = "" }
 type LessonId = LessonIdBrand & string;
 
-enum NanodegreeIdBrand {
-  _ = "",
-}
+enum NanodegreeIdBrand { _ = "" }
 type NanodegreeId = NanodegreeIdBrand & string;
 
 const lessonId: LessonId = "a-lesson" as LessonId;
@@ -597,27 +595,20 @@ const nanodegreeId: NanodegreeId = "a-nd" as NanodegreeId;
 
 ## Resources
 
-419-comment TS repo thread on nominal typing
-_https://github.com/Microsoft/TypeScript/issues/202_
+[419-comment TS repo thread on nominal typing](https://github.com/Microsoft/TypeScript/issues/202)
 
-TypeScript Deep Dive: Nominal Typing
-_https://basarat.gitbook.io/typescript/main-1/nominaltyping_
+[TypeScript Deep Dive: Nominal Typing](https://basarat.gitbook.io/typescript/main-1/nominaltyping)
 
-Nominal typing techniques in TypeScript
-_https://michalzalecki.com/nominal-typing-in-typescript/#approach-2-brands_
+[Nominal typing techniques in TypeScript](https://michalzalecki.com/nominal-typing-in-typescript/#approach-2-brands)
 
 ---
 
 ## More Resources (TS Docs)
 
-Narrowing
-_https://www.typescriptlang.org/docs/handbook/2/narrowing.html_
+[Narrowing](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
 
-Narrowing: control flow analysis
-_https://www.typescriptlang.org/docs/handbook/2/narrowing.html#control-flow-analysis_
+[Narrowing: control flow analysis](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#control-flow-analysis)
 
-Narrowing: using type predicates
-_https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates_
+[Narrowing: using type predicates](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates)
 
-Narrowing: discriminated unions
-_https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#discriminated-unions_
+[Narrowing: discriminated unions](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#discriminated-unions)
